@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MIA — MyndTeks</title>
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body class="stand">
+
+<!-- ================= VIDEOS DE FONDO ================= -->
+<video id="videoFondo" class="videoFondo" autoplay loop muted playsinline preload="auto">
+  <source src="video/video_1.mp4" type="video/mp4">
+</video>
+<video id="videoFondo2" class="videoFondo" autoplay loop muted playsinline preload="auto">
+  <source src="video/video_2.mp4" type="video/mp4">
+</video>
+
+<!-- ================= ZONA SENSIBLE + BOTÓN DE CONFIGURACIÓN ================= -->
+<div id="zonaConfig" aria-hidden="true"></div>
+<button id="btnConfig" title="Configuración" aria-label="Configuración">⚙</button>
+
+<!-- ================= PANEL DE CONFIGURACIÓN ================= -->
+<div id="setup">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <h1 style="margin:0">Configuración de MIA</h1>
+      <button id="btnCerrarSetup" title="Cerrar y volver al asistente"
+        style="width:38px;height:38px;padding:0;border-radius:50%;font-size:16px;color:var(--dim);">✕</button>
+    </div>
+    <p class="sub">MyndTeks · voz a voz con OpenAI Realtime.</p>
+
+    <div id="bannerEntorno" class="banner ambar oculto"></div>
+
+    <div id="avisoServidor" class="banner verde oculto"><b>Servidor conectado.</b> La llave de OpenAI vive en el servidor: esta pantalla recibe una temporal por sesión y no hay nada que pegar.</div>
+
+    <div id="filaLlave">
+      <label for="key">Llave de OpenAI</label>
+      <input type="password" id="key" placeholder="sk-..." autocomplete="off" spellcheck="false">
+      <div class="pista" style="margin-top:8px">
+        Esta llave queda guardada en el navegador de este equipo, no se envía a ningún lado.
+      </div>
+    </div>
+
+    <label for="modelo">Modelo</label>
+    <select id="modelo"><option value="">— presioná “Revisar todo” para buscar los disponibles —</option></select>
+
+    <div class="row">
+      <div>
+        <label for="voz">Voz</label>
+        <select id="voz">
+          <optgroup label="Se perciben femeninas">
+            <option value="marin">Marin (recomendada)</option>
+            <option value="coral">Coral</option>
+            <option value="shimmer">Shimmer</option>
+            <option value="sage">Sage</option>
+            <option value="alloy">Alloy</option>
+          </optgroup>
+          <optgroup label="Otras">
+            <option value="cedar">Cedar</option>
+            <option value="ballad">Ballad</option>
+            <option value="verse">Verse</option>
+            <option value="ash">Ash</option>
+            <option value="echo">Echo</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label for="modo">Modo de escucha</label>
+        <select id="modo">
+          <option value="ptt">Presionar para hablar</option>
+          <option value="libre">Manos libres</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:14px">
+      <button id="btnVoz" style="width:100%">Escuchar esta voz en español</button>
+      <div class="hint" id="avisoVoz" style="margin-top:10px">
+        OpenAI no etiqueta sus voces por género, así que el agrupamiento de arriba es por cómo suenan, no oficial.
+        Escuchalas y decidí con el oído.
+      </div>
+    </div>
+
+    <label for="mic">Micrófono</label>
+    <select id="mic"><option value="">Predeterminado del sistema</option></select>
+
+    <details id="panelIns">
+      <summary>Instrucciones y contexto de MIA</summary>
+      <div class="cuerpoIns">
+
+        <label>Modos de MIA</label>
+        <div class="pista">
+          El <b>modo general</b> es lo que sabe siempre, en cualquier evento. Debajo creás los modos
+          que quieras —una empresa, un tema puntual, un cliente— con el nombre que se te ocurra,
+          y le cargás la información. Solo entra en su cabeza lo que esté marcado.
+        </div>
+        <div id="listaCtx"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnAgregarCtx">Crear un modo</button>
+          <button id="btnVerLargo" style="flex:0 0 auto">Ver el largo</button>
+        </div>
+        <input type="file" id="archivoDoc" accept=".txt,.md,.csv,.json,.html" class="oculto">
+        <div class="hint" id="avisoDoc">
+          Cada contexto acepta un archivo de texto: punto txt, punto md, punto csv.
+          Un Word o un PDF no los puede leer: abrilo, copiá el texto y pegalo.
+        </div>
+
+        <div id="seccionFuentes" class="oculto">
+        <label>Fuentes de datos</label>
+        <div class="pista">
+          Un modo es texto pegado: MIA se lo sabe de memoria y envejece con el archivo. Una fuente es
+          otra cosa: MIA la <b>consulta en el momento</b>, lee el dato tal como está y lo dice con su
+          fecha de corte. Sirve una hoja de Google compartida por enlace, o una dirección que devuelva
+          CSV o JSON. <b>MIA nunca calcula un indicador</b>: solo lee el que ya viene calculado.
+        </div>
+        <div id="listaFuentes"></div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnAgregarFuente">Conectar una fuente</button>
+        </div>
+        <div class="hint" id="avisoFuente"></div>
+        </div>
+
+        <label for="lam">Láminas</label>
+        <div class="pista">
+          Lo que MIA puede mandar a pantalla mientras habla. Cada lámina empieza con dos signos igual
+          y su nombre. Tipos: <b>puntos</b> (viñetas), <b>barras</b> (etiqueta, barra vertical y valor),
+          <b>cifra</b> (un número gigante) y <b>texto</b>. Si no ponés tipo, asume puntos.
+        </div>
+        <textarea id="lam" rows="9" spellcheck="false" placeholder="== Participación del mercado
+tipo: barras
+Banderas blancas | 36.9
+Grupo UNO | 33.9"></textarea>
+        <div class="row" style="margin-top:10px">
+          <button id="btnCargarLam">Cargar archivo de láminas</button>
+          <button id="btnProbarLam" style="flex:0 0 auto">Ver las láminas</button>
+        </div>
+        <input type="file" id="archivoLam" accept=".txt,.md" class="oculto">
+        <div class="hint" id="avisoLam">Todavía no hay láminas. Sin láminas, MIA solo habla.</div>
+
+        <label for="ins">Cómo se comporta</label>
+        <div class="pista">
+          Sus reglas de personalidad, largo, tono y honestidad. Donde dice
+          <span class="marcador">[CONTEXTO DEL SEMINARIO]</span> se inserta el texto de arriba.
+        </div>
+        <textarea id="ins" rows="14" spellcheck="false"></textarea>
+
+        <div class="row" style="margin-top:14px">
+          <button class="primary" id="btnExportar">Guardar configuración en un archivo</button>
+          <button id="btnImportar">Cargar configuración</button>
+        </div>
+        <input type="file" id="archivoConf" accept=".json" class="oculto">
+        <div class="row" style="margin-top:10px">
+          <button id="btnRestaurar">Restaurar el texto original</button>
+          <button id="btnOlvidar">Olvidar lo guardado</button>
+        </div>
+        <div class="hint" id="avisoIns">Lo que escribas se guarda en este equipo y en este navegador. No se envía a ningún lado.</div>
+        <div class="hint" id="estadoGuardado">El guardado del navegador se pierde si abrís otra copia del programa, cambiás de computadora o limpiás los datos de Chrome. Bajá el archivo de configuración como respaldo.</div>
+      </div>
+    </details>
+
+    <div style="margin-top:24px" class="row">
+      <button id="btnDiag">Revisar todo</button>
+      <button class="primary" id="btnConectar">Conectar y volver</button>
+    </div>
+
+    <div id="diag"></div>
+  </div>
+</div>
+
+<!-- ================= ESCENARIO PRINCIPAL ================= -->
+<div id="stage">
+  <main id="escena">
+    <div id="lamina" class="oculto"></div>
+  </main>
+
+  <!-- NUBE DEL USUARIO (arriba del micrófono) -->
+  <div id="nubeUsuario" class="nube">
+    <div id="nubeUsuarioTexto" class="nubeTexto"></div>
+  </div>
+
+  <!-- NUBE DEL ASISTENTE (centro, sobre el botón) -->
+  <div id="nubeAsistente" class="nube">
+    <div id="nubeAsistenteTexto" class="nubeTexto"></div>
+  </div>
+
+  <button id="tocar" class="" type="button" aria-label="Hablar" title="Hablar"></button>
+  <footer id="controles" class="oculto">
+    <button id="ptt" class="" style="opacity: 1;">Mantené para hablar</button>
+    <input id="texto" type="text" placeholder="…o escribí la pregunta y presioná Enter">
+    <button id="btnCortar">Interrumpir</button>
+    <button id="btnSalir">Terminar</button>
+  </footer>
+</div>
+
+<!-- ================= EDITOR EN VIVO ================= -->
+<div id="editorVivo">
+  <div class="caja">
+    <h2>Instrucciones de MIA</h2>
+    <p class="sub">Se aplican sin cortar la conexión. Útil para afinarla durante el ensayo: cambiás, aplicás y le hablás de nuevo.</p>
+
+    <label for="insVivo">Cómo se comporta</label>
+    <textarea id="insVivo" rows="12" spellcheck="false"></textarea>
+
+    <div class="row" style="margin-top:16px">
+      <button class="primary" id="btnAplicar">Aplicar sin reconectar</button>
+      <button id="btnCerrarEditor">Cerrar</button>
+    </div>
+    <div class="hint" id="avisoVivo"></div>
+  </div>
+</div>
+
+<!-- ================= CONTEXTOS EN VIVO ================= -->
+<div id="panelCtx">
+  <div class="caja">
+    <h2>Modos</h2>
+    <p class="sub">Marcá lo que MIA tiene que saber ahora. Se aplica al instante, sin cortar la conexión.
+    También podés cambiarlo hablando: decí «modo» y el nombre. Sin esa palabra no cambia,
+    para que nadie del público te lo mueva.</p>
+    <div id="listaCtxVivo"></div>
+    <div id="fuentesVivo"></div>
+    <div class="row" style="margin-top:16px">
+      <button id="btnCerrarCtx">Cerrar</button>
+    </div>
+    <div class="hint" id="avisoCtxVivo"></div>
+  </div>
+</div>
+
+<div id="log" class="oculto"></div>
+<div id="ayuda" class="oculto">
+  <kbd>espacio</kbd> hablar · <kbd>Esc</kbd> interrumpir · <kbd>C</kbd> modos · <kbd>P</kbd> lámina · <kbd>←→</kbd> pasar · <kbd>I</kbd> instrucciones · <kbd>H</kbd> ocultar controles · <kbd>F</kbd> pantalla completa · <kbd>L</kbd> consola
+</div>
+
+<script src="js/main.js"></script>
+</body></html>
